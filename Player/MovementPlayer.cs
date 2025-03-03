@@ -69,7 +69,7 @@ public class MovementPlayer : MonoBehaviour
             Move((playerInput.actions["Move"].ReadValue<Vector2>().x * moveMultiplicator) * Time.fixedDeltaTime);
 
 
-            //ejecución de acciones a traves del buffer
+            //ejecuciÃ³n de acciones a traves del buffer
             //Acciones de movimiento
             InputAction actionMovement = GameManager.Instance.GetLastInputMovement();
             if (actionMovement != null)
@@ -90,6 +90,7 @@ public class MovementPlayer : MonoBehaviour
         animator.SetBool("Grounded", grounded);
 
         //giro de la escala del personaje
+//tengo que cambiar todo este proceso
         float scaleToMove = ((int) playerInput.actions["Move"].ReadValue<Vector2>().x * 30) + (int) rigidbody2DPlayer.velocity.x;
         switch (scaleToMove)
         {
