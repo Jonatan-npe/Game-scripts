@@ -34,7 +34,6 @@ public class MovementPlayer : MonoBehaviour
     private float framesInDash;
     private bool grounded;
     private int numJumpings = 0;
-    private float originalScaleX;
     private float originalGravity;
     private bool inDash;
     private bool canDash = true;
@@ -53,7 +52,6 @@ public class MovementPlayer : MonoBehaviour
     {
         framesInDash = framesToStartDash + invulnerableFrames + endDash;
         //Secuencia para instanciar dentro del codigo codigos externos
-        originalScaleX = transform.localScale.x;
         rigidbody2DPlayer = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
@@ -80,30 +78,29 @@ public class MovementPlayer : MonoBehaviour
     }
     private void Update()
     {
-        //Deteccion del suelo
+        // Declaración de variables
+        float moveX = playerInput.actions["Move"].ReadValue<Vector2>().x;
+        float velocityX = rigidbody2DPlayer.velocity.x;
+
+        // Detección del suelo
         grounded = Physics2D.OverlapBox(ground.transform.position, dimensionsBox, 0, layerGround);
         if (grounded && numJumpings >= 1) numJumpings = 0;
 
-        //envios al animator del jugador
+        // Envíos al animator del jugador
+        bool isMoving = moveX != 0;
+        if (animator.GetBool("Move") != isMoving) animator.SetBool("Move", isMoving);
 
-        animator.SetBool("Move" , playerInput.actions["Move"].ReadValue<Vector2>().x != 0);
-        animator.SetBool("Grounded", grounded);
+        if (animator.GetBool("Grounded") != grounded) animator.SetBool("Grounded", grounded);
+   
 
-        //giro de la escala del personaje
-//tengo que cambiar todo este proceso
-        float scaleToMove = ((int) playerInput.actions["Move"].ReadValue<Vector2>().x * 30) + (int) rigidbody2DPlayer.velocity.x;
-        switch (scaleToMove)
+        // Giro de la escala del personaje
+        if (moveX != 0)
         {
-            case > 0:
-                transform.localScale = new(originalScaleX, transform.localScale.y);
-                break;
-            case < 0:
-                transform.localScale = new(-originalScaleX, transform.localScale.y);
-                break;
-            case 0:
-                break;
+            float direction = Math.Sign(moveX);
+            transform.localScale = new Vector3(direction * MathF.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
         }
     }
+
     private void Move(float move)
     {
         Vector2 newVelocity = new(move, rigidbody2DPlayer.velocity.y);
