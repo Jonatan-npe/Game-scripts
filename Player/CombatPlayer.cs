@@ -14,7 +14,7 @@ public class CombatPlayer : MonoBehaviour
         ComboAttack2
     }
     private AttackOnCombo attackType = new();
-    Dictionary<AttackOnCombo,string> witchAttack = new Dictionary<AttackOnCombo, string>()
+    readonly Dictionary<AttackOnCombo,string> witchAttack = new()
     {
         {AttackOnCombo.ComboAttack1 , "Attack1"},
         {AttackOnCombo.ComboAttack2 , "Attack2" }
@@ -80,8 +80,8 @@ public class CombatPlayer : MonoBehaviour
                     case AttackOnCombo.ComboAttack2:
 
                         animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack2]);
+                        lastAttack = Time.time;
                         attackType = AttackOnCombo.ComboAttack1;
-
                         break;
                 }
                 Debug.Log("Ataca");

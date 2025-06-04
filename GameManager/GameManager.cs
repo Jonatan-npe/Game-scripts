@@ -5,13 +5,25 @@ using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
-    /*Este codigo va a ser el cerebro central de la ejecución,
+    /*Este codigo va a ser el cerebro central de la ejecuciï¿½n,
      * donde se va a acceder a otros codigos en ambos sentidos,
      * siendo este el nodo central*/
 
     public static GameManager Instance { get; private set; } //se instancia para poder acceder a el desde cualquier otro codigo
     [SerializeField] private InputBuffer inputBuffer;
-    
+    [SerializeField, Tooltip("Frame rate objetivo para el juego. Usa -1 para ilimitado.")]
+    private int targetFrameRate = 60;
+    public int TargetFrameRate
+    {
+        get => targetFrameRate;
+        set
+        {
+            targetFrameRate = value;
+            Application.targetFrameRate = targetFrameRate;
+        }
+    }
+
+
     private void Awake()
     {
         //linea para revisar si no existe ya una instancia de este objeto
@@ -24,6 +36,7 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        Application.targetFrameRate = targetFrameRate;
     }
 
     public void AddBufferMovement(InputAction inputAction)
