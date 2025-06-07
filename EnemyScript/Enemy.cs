@@ -1,11 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
     [SerializeField] private EnemyData enemyData;
     private float currentHealth;
+    [SerializeField] public float CurrentHealth
+    {
+        get { return currentHealth; }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -17,6 +22,20 @@ public class Enemy : MonoBehaviour
             return;
         }
         currentHealth = enemyData.health;
+    }
+    public void GetDamage(float damage)
+    {
+        currentHealth -= damage;
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        Debug.Log(gameObject.name + " has died.");
+        //Logica de la muerte del enemigo	
     }
 
     // Update is called once per frame

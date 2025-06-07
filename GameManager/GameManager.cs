@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; } //se instancia para poder acceder a el desde cualquier otro codigo
     [SerializeField] private InputBuffer inputBuffer;
+    [SerializeField] private CombatManager combatManager;
     [SerializeField, Tooltip("Frame rate objetivo para el juego. Usa -1 para ilimitado.")]
     private int targetFrameRate = 60;
     public int TargetFrameRate
@@ -37,11 +38,19 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
         Application.targetFrameRate = targetFrameRate;
+        if (inputBuffer == null)
+        {
+            inputBuffer = GetComponent<InputBuffer>();
+        }
+        if (combatManager == null)
+        {
+            combatManager = GetComponent<CombatManager>();
+        }
     }
 
     public void AddBufferMovement(InputAction inputAction)
     {
-       inputBuffer.AddActionMove(inputAction);
+        inputBuffer.AddActionMove(inputAction);
     }
     public InputAction GetLastInputMovement()
     {
@@ -51,8 +60,13 @@ public class GameManager : MonoBehaviour
     {
         inputBuffer.AddActionAttack(inputAction);
     }
-    public InputAction GetLastInputAttack() 
+    public InputAction GetLastInputAttack()
     {
         return inputBuffer.GetLastInputAttack();
     }
+    public void RegisterHit(GameObject attacker, GameObject target, float damage)
+    {
+        combatManager.RegisterHit(attacker, target, damage);
+    }
+    
 }
