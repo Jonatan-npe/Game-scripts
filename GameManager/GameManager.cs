@@ -68,5 +68,8 @@ public class GameManager : MonoBehaviour
     {
         combatManager.RegisterHit(attacker, target, damage);
     }
-    
+    public void RegisterHit(GameObject attacker, GameObject target, float damage, Vector2 position)
+    {
+        combatManager.RegisterHit(attacker, target, damage, position);
+    }
 }

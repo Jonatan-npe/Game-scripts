@@ -12,10 +12,13 @@ public class Enemy : MonoBehaviour
         get { return currentHealth; }
     }
 
+    //Componentes internos del enemy
+    private Rigidbody2D enemyRigidbody2D;
+
     // Start is called before the first frame update
     void Start()
     {
-        CustomCollider2D detectionCollider = GetComponentInChildren<CustomCollider2D>();
+        enemyRigidbody2D = GetComponent<Rigidbody2D>();
         if (enemyData == null)
         {
             Debug.LogError("EnemyData is not assigned in the inspector for " + gameObject.name);
@@ -26,6 +29,15 @@ public class Enemy : MonoBehaviour
     public void GetDamage(float damage)
     {
         currentHealth -= damage;
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+    public void GetDamage(float damage, Vector2 position)
+    {
+        currentHealth -= damage;
+        enemyRigidbody2D.AddForce(((Vector2)transform.position - position).normalized * enemyData.knockbackForce, ForceMode2D.Impulse);
         if (currentHealth <= 0)
         {
             Die();
@@ -45,7 +57,11 @@ public class Enemy : MonoBehaviour
     }
     void OnTriggerStay2D(Collider2D collision)
     {
-        
+        Debug.Log("Obejto en el collider: " + collision.gameObject.name);
+        if (collision.gameObject.name == "EnemyCollider")
+        {
+            GameManager.Instance.RegisterHit(gameObject, collision.gameObject, enemyData.damage, transform.position);
+        }
     }
     
 }

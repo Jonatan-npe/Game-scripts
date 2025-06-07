@@ -107,7 +107,6 @@ public class CombatPlayer : MonoBehaviour
                         attackType = AttackOnCombo.ComboAttack1;
                         break;
                 }
-                Debug.Log("Ataca");
                 break;
         }
     }
@@ -140,7 +139,8 @@ public class CombatPlayer : MonoBehaviour
             if (!enemiesHitThisWindow.Contains(enemy))
             {
                 enemiesHitThisWindow.Add(enemy);
-                GameManager.Instance.RegisterHit(this.gameObject, enemy, mainPlayerScript.CurrentDamage);
+                Debug.Log("Hit enemy: " + enemy.name + "at position: " + (Vector2)transform.position);
+                GameManager.Instance.RegisterHit(this.gameObject, enemy, mainPlayerScript.CurrentDamage, transform.position);
             }
         }
         hasHitInThisWindow = true;
