@@ -30,8 +30,8 @@ public class CombatPlayer : MonoBehaviour
     private PlayerInput playerInput;
 
     //Variables no editables
-
-    private float lastAttack;
+    private float framesSinceLastAttack = 0;
+    private bool canAttack = true;
 
     // Start is called before the first frame update
     void Start()
@@ -48,10 +48,17 @@ public class CombatPlayer : MonoBehaviour
     }
     private void Update()
     {
+        framesSinceLastAttack++;
+
+        // Cooldown: solo permite atacar si han pasado los frames necesarios
+        if (framesSinceLastAttack < framesToAttackAgain)
+            canAttack = false;
+        else
+            canAttack = true;
+
         if (attackType == AttackOnCombo.ComboAttack2)
         {
-            float lastestAttack = lastAttack + (framesToEndCombo * Time.deltaTime);
-            if (lastestAttack <= Time.time)
+            if (framesSinceLastAttack >= framesToEndCombo)
             {
                 attackType = AttackOnCombo.ComboAttack1;
             }
@@ -63,24 +70,24 @@ public class CombatPlayer : MonoBehaviour
             ActionAttackBuffer(lastInput);
         }
     }
+
     private void ActionAttackBuffer(InputAction lastInput)
     {
+        if (!canAttack) return; // <-- Solo procesa si el cooldown terminó
+
         switch (lastInput.name)
         {
             case "Attack":
                 switch (attackType)
                 {
                     case AttackOnCombo.ComboAttack1:
-
                         animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack1]);
-                        lastAttack = Time.time;
+                        framesSinceLastAttack = 0;
                         attackType = AttackOnCombo.ComboAttack2;
-
                         break;
                     case AttackOnCombo.ComboAttack2:
-
                         animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack2]);
-                        lastAttack = Time.time;
+                        framesSinceLastAttack = 0;
                         attackType = AttackOnCombo.ComboAttack1;
                         break;
                 }
