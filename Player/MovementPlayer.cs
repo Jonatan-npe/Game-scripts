@@ -80,7 +80,7 @@ public class MovementPlayer : MonoBehaviour
     {
         // Declaración de variables
         float moveX = playerInput.actions["Move"].ReadValue<Vector2>().x;
-        float velocityX = rigidbody2DPlayer.velocity.x;
+        float velocityX = rigidbody2DPlayer.linearVelocity.x;
 
         // Detección del suelo
         grounded = Physics2D.OverlapBox(ground.transform.position, dimensionsBox, 0, layerGround);
@@ -103,8 +103,8 @@ public class MovementPlayer : MonoBehaviour
 
     private void Move(float move)
     {
-        Vector2 newVelocity = new(move, rigidbody2DPlayer.velocity.y);
-        rigidbody2DPlayer.velocity = Vector2.SmoothDamp(rigidbody2DPlayer.velocity, newVelocity, ref velocidad, smoothMove);
+        Vector2 newVelocity = new(move, rigidbody2DPlayer.linearVelocity.y);
+        rigidbody2DPlayer.linearVelocity = Vector2.SmoothDamp(rigidbody2DPlayer.linearVelocity, newVelocity, ref velocidad, smoothMove);
     }
 
     //Metodos ejecutados desde el inputSystem en unity
@@ -152,7 +152,7 @@ public class MovementPlayer : MonoBehaviour
                     case 1:
 
                         //ejecucion del segundo salto con menor potencia
-                        rigidbody2DPlayer.velocity = new Vector2(rigidbody2DPlayer.velocity.x, 0);
+                        rigidbody2DPlayer.linearVelocity = new Vector2(rigidbody2DPlayer.linearVelocity.x, 0);
                         rigidbody2DPlayer.AddForce(Vector2.up * (float)(jumpForce * 0.8), ForceMode2D.Impulse);
                         animator.SetTrigger("Jump");
 
@@ -183,7 +183,7 @@ public class MovementPlayer : MonoBehaviour
         
         yield return new WaitForSeconds(framesToStartDash * Time.fixedDeltaTime);
 
-        rigidbody2DPlayer.velocity = Vector2.zero;
+        rigidbody2DPlayer.linearVelocity = Vector2.zero;
         rigidbody2DPlayer.gravityScale = 0;
         rigidbody2DPlayer.AddForce(new Vector2(transform.localScale.x * dashForce, 0), ForceMode2D.Impulse);
 
@@ -194,7 +194,7 @@ public class MovementPlayer : MonoBehaviour
         yield return new WaitForSeconds(endDash * Time.fixedDeltaTime);
 
         rigidbody2DPlayer.gravityScale = originalGravity;
-        rigidbody2DPlayer.velocity = Vector2.zero;
+        rigidbody2DPlayer.linearVelocity = Vector2.zero;
         inDash = false;
 
     }

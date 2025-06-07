@@ -1,4 +1,6 @@
 # Repositorio Scripts
-## Descripci髇
+## Descripci贸n
 este repositorio tiene como proposito almacenar diferentes scripts de un videojuego
-estos scripts no son el c骴igo fuente, unicamente son caracteristicas y c骴igos de control.
+estos scripts no son el c贸digo fuente, unicamente son caracteristicas y c贸digos de control.
+
+**nota:** *los scripts que se encuentran en este repositorio no son necesariamente el c贸digo fuente de los scripts, pueden ser scripts de control, scripts de funciones, scripts de utilidades, etc. Tampoco incluye scripts como ScriptableObjects, ScriptableObjects de prefab, etc.*
