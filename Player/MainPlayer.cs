@@ -6,7 +6,7 @@ public class MainPlayer : MonoBehaviour
     [SerializeField] private float healthRegen = 10f;
     [SerializeField] private float damageBase = 10f;
 
-    private float currentHealth;
+    [SerializeField, ReadOnly]private float currentHealth;
     public float CurrentHealth
     {
         get { return currentHealth; }
@@ -19,7 +19,7 @@ public class MainPlayer : MonoBehaviour
             }
         }
     }
-    private float currentDamage;
+    [SerializeField, ReadOnly] private float currentDamage;
     public float CurrentDamage
     {
         get { return currentDamage; }
