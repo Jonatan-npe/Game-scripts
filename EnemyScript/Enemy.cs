@@ -6,8 +6,8 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [SerializeField] private EnemyData enemyData;
-    private float currentHealth;
-    [SerializeField] public float CurrentHealth
+    [SerializeField, ReadOnly] private float currentHealth;
+    public float CurrentHealth
     {
         get { return currentHealth; }
     }
