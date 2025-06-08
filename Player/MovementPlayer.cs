@@ -166,6 +166,7 @@ public class MovementPlayer : MonoBehaviour
                 break;
         }
     }
+
     private IEnumerator CoolDownDash()
     {
         canDash = false;

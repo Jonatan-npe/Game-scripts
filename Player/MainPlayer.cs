@@ -25,6 +25,15 @@ public class MainPlayer : MonoBehaviour
         get { return currentDamage; }
     }
 
+    // Componentes internos del jugador
+    private Animator animator;
+
+
+    private void Awake()
+    {
+        animator = GetComponent<Animator>();
+        animator.SetBool("Dead", false);
+    }
     private void Start()
     {
         CurrentHealth = maxHealth;
@@ -38,6 +47,7 @@ public class MainPlayer : MonoBehaviour
     public void GetDamage(float damage)
     {
         CurrentHealth -= damage;
+        animator.SetTrigger("Hit");
         Debug.Log("Player took damage: " + damage + ", Current Health: " + CurrentHealth);
     }
 }

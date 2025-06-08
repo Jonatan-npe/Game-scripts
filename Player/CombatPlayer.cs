@@ -23,12 +23,15 @@ public class CombatPlayer : MonoBehaviour
     //Variables editables
     [SerializeField, Range(0, 100)] private float framesToAttackAgain;
     [SerializeField, Range(0, 300)] private float framesToEndCombo;
+    [SerializeField, Range(0, 200)] private float framesToGetDamage;
 
     //colliders
     [SerializeField] private LayerMask hitLayerMask;
     [SerializeField] private PolygonCollider2D attack1Collider;
     [SerializeField] private PolygonCollider2D attack2Collider;
+    [SerializeField] private CapsuleCollider2D damageCollider; // Collider para recibir daño
 
+    [SerializeField, Range(0, 1000)] private float forceBounce = 100f; // Fuerza de rebote al recibir daño
 
     //Componentes internos del pj
     private Rigidbody2D rigidbody2DPlayer;
@@ -46,7 +49,7 @@ public class CombatPlayer : MonoBehaviour
     private int witchAttackIndex = 0; // Para llevar el control del ataque actual
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         rigidbody2DPlayer = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
@@ -79,7 +82,6 @@ public class CombatPlayer : MonoBehaviour
                 attackType = AttackOnCombo.ComboAttack1;
             }
         }
-
         InputAction lastInput = GameManager.Instance.GetLastInputAttack();
         if (lastInput != null)
         {
@@ -151,6 +153,13 @@ public class CombatPlayer : MonoBehaviour
     {
         mainPlayerScript.GetDamage(damage);
     }
+    public void GetDamage(float damage, Vector2 position)
+    {
+        rigidbody2DPlayer.AddForce(((Vector2)transform.position - position).normalized * forceBounce, ForceMode2D.Impulse);
+        mainPlayerScript.GetDamage(damage);
+        Debug.Log("Player took damage: " + damage + ", Current Health: " + mainPlayerScript.CurrentHealth + " at position: " + position);
+        StartCoroutine(InvulnerabilityFrames(framesToGetDamage * Time.fixedDeltaTime));
+    }
 
     //funciones llamads por el animator
     public void StartAttack1Window()
@@ -173,4 +182,14 @@ public class CombatPlayer : MonoBehaviour
         isAttackActive = false;
     }
 
+    //Coroutines
+    private IEnumerator InvulnerabilityFrames(float duration)
+    {
+        damageCollider.enabled = false; // Desactiva el collider para evitar daño
+        for (int i =0; i < framesToGetDamage; i++)
+        {
+            yield return new WaitForFixedUpdate(); // Espera un frame
+        }
+        damageCollider.enabled = true; // Reactiva el collider después de los frames de invulnerabilidad
+    }
 }

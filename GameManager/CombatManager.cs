@@ -45,7 +45,7 @@ public class CombatManager : MonoBehaviour
             if (combatPlayer != null)
             {
                 // Aquí puedes aplicar daño al jugador
-                combatPlayer.GetDamage(damage);
+                combatPlayer.GetDamage(damage, position);
             }
             else
             {
