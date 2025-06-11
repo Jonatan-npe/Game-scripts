@@ -47,6 +47,7 @@ public class MovementPlayer : MonoBehaviour
     private Rigidbody2D rigidbody2DPlayer;
     private Animator animator;
     private PlayerInput playerInput;
+    private MainPlayer mainPlayerScript;
 
     void Start()
     {
@@ -55,6 +56,7 @@ public class MovementPlayer : MonoBehaviour
         rigidbody2DPlayer = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
+        mainPlayerScript = GetComponent<MainPlayer>();
         originalGravity = rigidbody2DPlayer.gravityScale;
     }
 
@@ -179,23 +181,17 @@ public class MovementPlayer : MonoBehaviour
     private IEnumerator Dash()
     {
         inDash = true;
-        canJump = false;
         animator.SetTrigger("Dash");
-        
-        yield return new WaitForSeconds(framesToStartDash * Time.fixedDeltaTime);
-
         rigidbody2DPlayer.linearVelocity = Vector2.zero;
         rigidbody2DPlayer.gravityScale = 0;
+        yield return new WaitForSeconds(framesToStartDash * Time.fixedDeltaTime);
+
         rigidbody2DPlayer.AddForce(new Vector2(transform.localScale.x * dashForce, 0), ForceMode2D.Impulse);
 
-        yield return new WaitForSeconds(invulnerableFrames * Time.fixedDeltaTime);
-
-        canJump = true;
-
-        yield return new WaitForSeconds(endDash * Time.fixedDeltaTime);
-
+        yield return StartCoroutine(mainPlayerScript.InvulnerabilityFrames(invulnerableFrames));
         rigidbody2DPlayer.gravityScale = originalGravity;
         rigidbody2DPlayer.linearVelocity = Vector2.zero;
+        yield return new WaitForSeconds(endDash * Time.fixedDeltaTime);
         inDash = false;
 
     }

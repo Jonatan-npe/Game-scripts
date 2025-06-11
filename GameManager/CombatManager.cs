@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class CombatManager : MonoBehaviour
 {
-    public void RegisterHit(GameObject attacker, GameObject target, float damage)
+    public void RegisterHit(GameObject attacker,GameObject target, float damage)
     {
         Debug.Log($"{attacker.name} golpea {target.name}");
         if (target.layer == LayerMask.NameToLayer("EnemyToPlayer"))
@@ -23,7 +23,7 @@ public class CombatManager : MonoBehaviour
             CombatPlayer combatPlayer = target.GetComponent<CombatPlayer>();
         }
     }
-        public void RegisterHit(GameObject attacker, GameObject target, float damage, Vector2 position)
+        public void RegisterHit(GameObject attacker,GameObject target, float damage,Vector2 position)
     {
         Debug.Log($"{attacker.name} golpea {target.name}");
         if (target.layer == LayerMask.NameToLayer("EnemyToPlayer"))

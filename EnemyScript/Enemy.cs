@@ -57,7 +57,6 @@ public class Enemy : MonoBehaviour
     }
     void OnTriggerStay2D(Collider2D collision)
     {
-        Debug.Log("Obejto en el collider: " + collision.gameObject.name);
         if (collision.gameObject.name == "EnemyCollider")
         {
             GameManager.Instance.RegisterHit(gameObject, collision.gameObject, enemyData.damage, transform.position);

@@ -40,13 +40,15 @@ public class CombatPlayer : MonoBehaviour
     private MainPlayer mainPlayerScript;
 
     //Variables no editables
-    private float framesSinceLastAttack = 0;
     private bool canAttack = true;
     private bool isAttackActive = false; // Se activa/desactiva desde la animación
     private bool hasHitInThisWindow = false; // Flag para evitar múltiples hits
     private HashSet<GameObject> enemiesHitThisWindow = new(); // Para registrar enemigos golpeados
     private List<Collider2D> hitResults = new(); // Para almacenar los colliders detectados
     private int witchAttackIndex = 0; // Para llevar el control del ataque actual
+
+    private Coroutine endComboCoroutine;
+
 
     // Start is called before the first frame update
     void Awake()
@@ -55,6 +57,11 @@ public class CombatPlayer : MonoBehaviour
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
         mainPlayerScript = GetComponent<MainPlayer>();
+        if (endComboCoroutine != null)
+        {
+            StopCoroutine(endComboCoroutine);
+        }
+        endComboCoroutine = StartCoroutine(EndCombo());
     }
 
     // Update is called once per frame
@@ -67,51 +74,40 @@ public class CombatPlayer : MonoBehaviour
     }
     private void Update()
     {
-        framesSinceLastAttack++;
-
-        // Cooldown: solo permite atacar si han pasado los frames necesarios
-        if (framesSinceLastAttack < framesToAttackAgain)
-            canAttack = false;
-        else
-            canAttack = true;
-
-        if (attackType == AttackOnCombo.ComboAttack2)
-        {
-            if (framesSinceLastAttack >= framesToEndCombo)
-            {
-                attackType = AttackOnCombo.ComboAttack1;
-            }
-        }
         InputAction lastInput = GameManager.Instance.GetLastInputAttack();
         if (lastInput != null)
         {
             ActionAttackBuffer(lastInput);
         }
     }
+private void ActionAttackBuffer(InputAction lastInput)
+{
+    if (!canAttack) return;
 
-    private void ActionAttackBuffer(InputAction lastInput)
+    switch (lastInput.name)
     {
-        if (!canAttack) return; // <-- Solo procesa si el cooldown terminó
-
-        switch (lastInput.name)
-        {
-            case "Attack":
-                switch (attackType)
-                {
-                    case AttackOnCombo.ComboAttack1:
-                        animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack1]);
-                        framesSinceLastAttack = 0;
-                        attackType = AttackOnCombo.ComboAttack2;
-                        break;
-                    case AttackOnCombo.ComboAttack2:
-                        animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack2]);
-                        framesSinceLastAttack = 0;
-                        attackType = AttackOnCombo.ComboAttack1;
-                        break;
-                }
-                break;
-        }
+        case "Attack":
+            switch (attackType)
+            {
+                case AttackOnCombo.ComboAttack1:
+                    animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack1]);
+                    attackType = AttackOnCombo.ComboAttack2;
+                    StartCoroutine(WaitForAttack());
+                    if (endComboCoroutine != null)
+                        StopCoroutine(endComboCoroutine);
+                    endComboCoroutine = StartCoroutine(EndCombo());
+                    break;
+                case AttackOnCombo.ComboAttack2:
+                    animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack2]);
+                    StartCoroutine(WaitForAttack());
+                    attackType = AttackOnCombo.ComboAttack1;
+                    if (endComboCoroutine != null)
+                        StopCoroutine(endComboCoroutine);
+                    break;
+            }
+            break;
     }
+}
     public void RequestToAtack(InputAction.CallbackContext callbackContext)
     {
         if (callbackContext.performed)
@@ -141,7 +137,6 @@ public class CombatPlayer : MonoBehaviour
             if (!enemiesHitThisWindow.Contains(enemy))
             {
                 enemiesHitThisWindow.Add(enemy);
-                Debug.Log("Hit enemy: " + enemy.name + "at position: " + (Vector2)transform.position);
                 GameManager.Instance.RegisterHit(this.gameObject, enemy, mainPlayerScript.CurrentDamage, transform.position);
             }
         }
@@ -157,8 +152,7 @@ public class CombatPlayer : MonoBehaviour
     {
         rigidbody2DPlayer.AddForce(((Vector2)transform.position - position).normalized * forceBounce, ForceMode2D.Impulse);
         mainPlayerScript.GetDamage(damage);
-        Debug.Log("Player took damage: " + damage + ", Current Health: " + mainPlayerScript.CurrentHealth + " at position: " + position);
-        StartCoroutine(InvulnerabilityFrames(framesToGetDamage * Time.fixedDeltaTime));
+        StartCoroutine(mainPlayerScript.InvulnerabilityFrames(framesToGetDamage));
     }
 
     //funciones llamads por el animator
@@ -182,14 +176,20 @@ public class CombatPlayer : MonoBehaviour
         isAttackActive = false;
     }
 
-    //Coroutines
-    private IEnumerator InvulnerabilityFrames(float duration)
+    private IEnumerator WaitForAttack()
     {
-        damageCollider.enabled = false; // Desactiva el collider para evitar daño
-        for (int i =0; i < framesToGetDamage; i++)
-        {
-            yield return new WaitForFixedUpdate(); // Espera un frame
-        }
-        damageCollider.enabled = true; // Reactiva el collider después de los frames de invulnerabilidad
+        canAttack = false;
+        Debug.Log("WaitForAttack started");
+        yield return mainPlayerScript.FrameWaiter(framesToAttackAgain);
+        Debug.Log("WaitForAttack finished");
+        canAttack = true;
     }
+    private IEnumerator EndCombo()
+    {
+        Debug.Log("EndCombo started");
+        yield return mainPlayerScript.FrameWaiter(framesToEndCombo);
+        Debug.Log("EndCombo finished");
+        attackType = AttackOnCombo.ComboAttack1;
+    }
+
 }

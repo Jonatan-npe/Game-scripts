@@ -64,11 +64,11 @@ public class GameManager : MonoBehaviour
     {
         return inputBuffer.GetLastInputAttack();
     }
-    public void RegisterHit(GameObject attacker, GameObject target, float damage)
+    public void RegisterHit(GameObject attacker,GameObject target, float damage)
     {
         combatManager.RegisterHit(attacker, target, damage);
     }
-    public void RegisterHit(GameObject attacker, GameObject target, float damage, Vector2 position)
+    public void RegisterHit(GameObject attacker,GameObject target, float damage, Vector2 position)
     {
         combatManager.RegisterHit(attacker, target, damage, position);
     }
