@@ -35,9 +35,10 @@ public class MovementPlayer : MonoBehaviour
     private bool grounded;
     private int numJumpings = 0;
     private float originalGravity;
-    private bool inDash;
     private bool canDash = true;
     private bool canJump = true;
+    private bool canMove = true;
+    public bool CanMove { get => canMove; set => canMove = value; }
     Vector2 velocidad = Vector2.zero;
 
     private double lastTime;
@@ -64,7 +65,7 @@ public class MovementPlayer : MonoBehaviour
     {
         //movimiento del personaje, donde se le da una velocidad al personaje,
         //por lo que siempre estara ligada la velocidad horizontal a este parametro
-        if (!inDash)
+        if (canMove)
         {
             Move((playerInput.actions["Move"].ReadValue<Vector2>().x * moveMultiplicator) * Time.fixedDeltaTime);
 
@@ -93,7 +94,7 @@ public class MovementPlayer : MonoBehaviour
         if (animator.GetBool("Move") != isMoving) animator.SetBool("Move", isMoving);
 
         if (animator.GetBool("Grounded") != grounded) animator.SetBool("Grounded", grounded);
-   
+
 
         // Giro de la escala del personaje
         if (moveX != 0)
@@ -180,7 +181,6 @@ public class MovementPlayer : MonoBehaviour
     }
     private IEnumerator Dash()
     {
-        inDash = true;
         animator.SetTrigger("Dash");
         rigidbody2DPlayer.linearVelocity = Vector2.zero;
         rigidbody2DPlayer.gravityScale = 0;
@@ -192,8 +192,6 @@ public class MovementPlayer : MonoBehaviour
         rigidbody2DPlayer.gravityScale = originalGravity;
         rigidbody2DPlayer.linearVelocity = Vector2.zero;
         yield return new WaitForSeconds(endDash * Time.fixedDeltaTime);
-        inDash = false;
-
     }
     //Metodo para dibujar el espacio usado para detectar el suelo
     private void OnDrawGizmos()
@@ -202,4 +200,6 @@ public class MovementPlayer : MonoBehaviour
         Gizmos.DrawCube(ground.transform.position, dimensionsBox);
 
     }
+
+
 }

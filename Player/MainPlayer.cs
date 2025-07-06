@@ -35,12 +35,15 @@ public class MainPlayer : MonoBehaviour
     // Componentes internos del jugador
     private Animator animator;
     private SpriteRenderer spriteRenderer;
+    private MovementPlayer movementPlayerScript;
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        movementPlayerScript = GetComponent<MovementPlayer>();
         animator.SetBool("Dead", false);
+
     }
     private void Start()
     {
@@ -74,6 +77,15 @@ public class MainPlayer : MonoBehaviour
         {
             yield return new WaitForFixedUpdate(); // Espera un frame
         }
+    }
+
+    public void DisableMovement()
+    {
+        movementPlayerScript.CanMove = false;
+    }
+    public void EnableMovement()
+    {
+        movementPlayerScript.CanMove = true;
     }
     
 }
