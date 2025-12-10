@@ -50,7 +50,7 @@ public class MovementPlayer : MonoBehaviour
     private PlayerInput playerInput;
     private MainPlayer mainPlayerScript;
 
-    void Start()
+    void Awake()
     {
         framesInDash = framesToStartDash + invulnerableFrames + endDash;
         //Secuencia para instanciar dentro del codigo codigos externos
@@ -184,7 +184,7 @@ public class MovementPlayer : MonoBehaviour
         animator.SetTrigger("Dash");
         rigidbody2DPlayer.linearVelocity = Vector2.zero;
         rigidbody2DPlayer.gravityScale = 0;
-        yield return new WaitForSeconds(framesToStartDash * Time.fixedDeltaTime);
+        yield return mainPlayerScript.FrameWaiter(framesToStartDash);
 
         rigidbody2DPlayer.AddForce(new Vector2(transform.localScale.x * dashForce, 0), ForceMode2D.Impulse);
 
@@ -193,6 +193,7 @@ public class MovementPlayer : MonoBehaviour
         rigidbody2DPlayer.linearVelocity = Vector2.zero;
         yield return new WaitForSeconds(endDash * Time.fixedDeltaTime);
     }
+
     //Metodo para dibujar el espacio usado para detectar el suelo
     private void OnDrawGizmos()
     {
@@ -200,6 +201,6 @@ public class MovementPlayer : MonoBehaviour
         Gizmos.DrawCube(ground.transform.position, dimensionsBox);
 
     }
-
+    // Tengo que crear un metodo para que el personaje se sostenga en el aire
 
 }

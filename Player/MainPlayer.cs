@@ -43,7 +43,6 @@ public class MainPlayer : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         movementPlayerScript = GetComponent<MovementPlayer>();
         animator.SetBool("Dead", false);
-
     }
     private void Start()
     {
