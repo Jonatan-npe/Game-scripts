@@ -101,6 +101,9 @@ public class MovementPlayer : MonoBehaviour
         {
             float direction = Math.Sign(moveX);
             transform.localScale = new Vector3(direction * MathF.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+
+            // Notificacion del cambio de sentido
+            mainPlayerScript.NotifyDirectionChange(direction);
         }
     }
 

@@ -6,9 +6,7 @@ public class MainPlayer : MonoBehaviour
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float healthRegen = 10f;
     [SerializeField] private float damageBase = 10f;
-
     [SerializeField, ReadOnly] private float currentHealth;
-
     //Colliders
     [SerializeField] private CapsuleCollider2D damageCollider; // Collider para recibir daño
 
@@ -32,16 +30,29 @@ public class MainPlayer : MonoBehaviour
         get { return currentDamage; }
     }
 
+
+    // Eventos y declaraciones necesarias para los eventos
+    public event System.Action<float> OnDirectionChanged;
+    private float lastDirection = 1f;
+
+
     // Componentes internos del jugador
     private Animator animator;
     private SpriteRenderer spriteRenderer;
     private MovementPlayer movementPlayerScript;
+    private Transform playerTransform;
+    public Transform PlayerTransform
+    {
+        get { return playerTransform; }
+    }
+
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         movementPlayerScript = GetComponent<MovementPlayer>();
+        playerTransform = GetComponent<Transform>();
         animator.SetBool("Dead", false);
     }
     private void Start()
@@ -86,5 +97,14 @@ public class MainPlayer : MonoBehaviour
     {
         movementPlayerScript.CanMove = true;
     }
-    
+    // funcion es de los eventos
+
+    public void NotifyDirectionChange(float newDirection)
+    {
+        if (newDirection != lastDirection)
+        {
+            lastDirection = newDirection;
+            OnDirectionChanged?.Invoke(newDirection);
+        }
+    }
 }
