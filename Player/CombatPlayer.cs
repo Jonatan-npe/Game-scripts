@@ -1,43 +1,46 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening.Core.Enums;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 
-public class CombatPlayer : MonoBehaviour
+[RequireComponent(typeof(ComboSystem))]
+public class CombatPlayer : CombatantBase
 {
-    //Tipos de ataques en una lista para su facil acceso
-    private enum AttackOnCombo
+    //Variables de combate (salud y daño)
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float healthRegen = 10f;
+    [SerializeField] private float damageBase = 10f;
+    [SerializeField, ReadOnly] private float currentDamage;
+    public float CurrentDamage
     {
-        ComboAttack1,
-        ComboAttack2
+        get { return currentDamage; }
     }
-    private AttackOnCombo attackType = new();
-    readonly Dictionary<AttackOnCombo, string> witchAttack = new()
-    {
-        {AttackOnCombo.ComboAttack1 , "Attack1"},
-        {AttackOnCombo.ComboAttack2 , "Attack2" }
-    };
 
-    //Variables editables
+    //Variables editables de ataque
     [SerializeField, Range(0, 100)] private float framesToAttackAgain;
     [SerializeField, Range(0, 300)] private float framesToEndCombo;
     [SerializeField, Range(0, 200)] private float framesToGetDamage;
 
     //colliders
     [SerializeField] private LayerMask hitLayerMask;
-    [SerializeField] private PolygonCollider2D attack1Collider;
-    [SerializeField] private PolygonCollider2D attack2Collider;
+    [SerializeField] private List<PolygonCollider2D> attackColliders = new();
     [SerializeField] private CapsuleCollider2D damageCollider; // Collider para recibir daño
 
     [SerializeField, Range(0, 1000)] private float forceBounce = 100f; // Fuerza de rebote al recibir daño
+
+    //Color para indicar invulnerabilidad
+    [SerializeField] private Color invulnerabilityColor; // Color con alpha reducido
 
     //Componentes internos del pj
     private Rigidbody2D rigidbody2DPlayer;
     private Animator animator;
     private PlayerInput playerInput;
     private MainPlayer mainPlayerScript;
+    private ComboSystem comboSystem;
 
     //Variables no editables
     private bool canAttack = true;
@@ -45,23 +48,24 @@ public class CombatPlayer : MonoBehaviour
     private bool hasHitInThisWindow = false; // Flag para evitar múltiples hits
     private HashSet<GameObject> enemiesHitThisWindow = new(); // Para registrar enemigos golpeados
     private List<Collider2D> hitResults = new(); // Para almacenar los colliders detectados
-    private int witchAttackIndex = 0; // Para llevar el control del ataque actual
+    InputAction lastInput;
 
-    private Coroutine endComboCoroutine;
-
-
+    // Eventos
     // Start is called before the first frame update
     void Awake()
     {
+        comboSystem = GetComponent<ComboSystem>();
         rigidbody2DPlayer = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
         mainPlayerScript = GetComponent<MainPlayer>();
-        if (endComboCoroutine != null)
-        {
-            StopCoroutine(endComboCoroutine);
-        }
-        endComboCoroutine = StartCoroutine(EndCombo());
+        animator.SetBool("Dead", false);
+    }
+
+    void Start()
+    {
+        currentHealth = maxHealth;
+        currentDamage = damageBase;
     }
 
     // Update is called once per frame
@@ -80,34 +84,16 @@ public class CombatPlayer : MonoBehaviour
             ActionAttackBuffer(lastInput);
         }
     }
-private void ActionAttackBuffer(InputAction lastInput)
-{
-    if (!canAttack) return;
-
-    switch (lastInput.name)
+    private void ActionAttackBuffer(InputAction lastInput)
     {
-        case "Attack":
-            switch (attackType)
-            {
-                case AttackOnCombo.ComboAttack1:
-                    animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack1]);
-                    attackType = AttackOnCombo.ComboAttack2;
-                    StartCoroutine(WaitForAttack());
-                    if (endComboCoroutine != null)
-                        StopCoroutine(endComboCoroutine);
-                    endComboCoroutine = StartCoroutine(EndCombo());
-                    break;
-                case AttackOnCombo.ComboAttack2:
-                    animator.SetTrigger(witchAttack[AttackOnCombo.ComboAttack2]);
-                    StartCoroutine(WaitForAttack());
-                    attackType = AttackOnCombo.ComboAttack1;
-                    if (endComboCoroutine != null)
-                        StopCoroutine(endComboCoroutine);
-                    break;
-            }
-            break;
+        if (!canAttack) return;
+        switch (lastInput.name)
+        {
+            case "Attack":
+                RaiseOnAttack();
+                break;
+        }   
     }
-}
     public void RequestToAtack(InputAction.CallbackContext callbackContext)
     {
         if (callbackContext.performed)
@@ -120,39 +106,52 @@ private void ActionAttackBuffer(InputAction lastInput)
     private void CheckHit()
     {
         int hitCount = 0;
-        switch (witchAttackIndex)
-        {
-            case 0:
-                hitCount = Physics2D.OverlapCollider(attack1Collider, hitResults);
-                break;
-            case 1:
-                hitCount = Physics2D.OverlapCollider(attack2Collider, hitResults);
-                break;
-            default:
-                break;
-        }
+        var currentAttackTypeIndex = comboSystem.GetCurrentTypeIndex();
+        var currentAttackIndex = comboSystem.GetCurrentAttackIndex();
+        hitCount = Physics2D.OverlapCollider(attackColliders[comboSystem.AttackTypes[currentAttackTypeIndex]
+                                                                        .attacks[currentAttackIndex].colliderIndex], hitResults);
+
         for (int i = 0; i < hitCount; i++)
         {
             GameObject enemy = hitResults[i].gameObject;
             if (!enemiesHitThisWindow.Contains(enemy))
             {
                 enemiesHitThisWindow.Add(enemy);
-                GameManager.Instance.RegisterHit(this.gameObject, enemy, mainPlayerScript.CurrentDamage, transform.position);
+                GameManager.Instance.RegisterHit(this.gameObject, enemy, CurrentDamage, transform.position);
             }
         }
         hasHitInThisWindow = true;
 
     }
 
-    public void GetDamage(float damage)
+    /// <summary>
+    /// Sobrescribe GetDamage para centralizar la lógica de daño del jugador.
+    /// </summary>
+    public override void GetDamage(float damage)
     {
-        mainPlayerScript.GetDamage(damage);
+        base.GetDamage(damage);
+        GetComponent<Animator>().SetTrigger("Hit");
     }
-    public void GetDamage(float damage, Vector2 position)
+
+    /// <summary>
+    /// Versión con knockback para el jugador.
+    /// </summary>
+    public override void GetDamage(float damage, Vector2 position)
     {
         rigidbody2DPlayer.AddForce(((Vector2)transform.position - position).normalized * forceBounce, ForceMode2D.Impulse);
-        mainPlayerScript.GetDamage(damage);
-        StartCoroutine(mainPlayerScript.InvulnerabilityFrames(framesToGetDamage));
+        base.GetDamage(damage);
+        GetComponent<Animator>().SetTrigger("Hit");
+        StartCoroutine(mainPlayerScript.InvulnerabilityFrames(framesToGetDamage, damageCollider, invulnerabilityColor));
+    }
+
+    /// <summary>
+    /// Sobrescribe OnDeath para lógica específica del jugador.
+    /// </summary>
+    protected override void OnDeath()
+    {
+        Debug.Log("Player has died.");
+        GetComponent<Animator>().SetBool("Dead", true);
+        //Logica de la muerte del juegador
     }
 
     //funciones llamads por el animator
@@ -161,14 +160,12 @@ private void ActionAttackBuffer(InputAction lastInput)
         isAttackActive = true;
         hasHitInThisWindow = false;
         enemiesHitThisWindow.Clear();
-        witchAttackIndex = 0;
     }
     public void StartAttack2Window()
     {
         isAttackActive = true;
         hasHitInThisWindow = false;
         enemiesHitThisWindow.Clear();
-        witchAttackIndex = 1;
     }
 
     public void EndAttackWindow()
@@ -176,20 +173,28 @@ private void ActionAttackBuffer(InputAction lastInput)
         isAttackActive = false;
     }
 
+    /// <summary>
+    /// Espera un número de frames especificado.
+    /// </summary>
+    public IEnumerator FrameWaiter(float duration)
+    {
+        for (int i = 0; i < duration; i++)
+        {
+            yield return new WaitForFixedUpdate();
+        }
+    }
+
+    /// <summary>
+    /// Corrutina para frames de invulnerabilidad tras recibir daño.
+    /// </summary>
+
+
     private IEnumerator WaitForAttack()
     {
         canAttack = false;
         Debug.Log("WaitForAttack started");
-        yield return mainPlayerScript.FrameWaiter(framesToAttackAgain);
+        yield return FrameWaiter(framesToAttackAgain);
         Debug.Log("WaitForAttack finished");
         canAttack = true;
     }
-    private IEnumerator EndCombo()
-    {
-        Debug.Log("EndCombo started");
-        yield return mainPlayerScript.FrameWaiter(framesToEndCombo);
-        Debug.Log("EndCombo finished");
-        attackType = AttackOnCombo.ComboAttack1;
-    }
-
 }

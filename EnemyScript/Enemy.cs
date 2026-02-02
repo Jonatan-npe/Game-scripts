@@ -3,14 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour
+public class Enemy : CombatantBase
 {
     [SerializeField] private EnemyData enemyData;
-    [SerializeField, ReadOnly] private float currentHealth;
-    public float CurrentHealth
-    {
-        get { return currentHealth; }
-    }
 
     //Componentes internos del enemy
     private Rigidbody2D enemyRigidbody2D;
@@ -26,25 +21,43 @@ public class Enemy : MonoBehaviour
         }
         currentHealth = enemyData.health;
     }
-    public void GetDamage(float damage)
+
+    /// <summary>
+    /// Sobrescribe GetDamage para aplicar knockback específico de enemigos.
+    /// </summary>
+    public override void GetDamage(float damage)
     {
-        currentHealth -= damage;
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        base.GetDamage(damage);
     }
-    public void GetDamage(float damage, Vector2 position)
+
+    /// <summary>
+    /// Versión con posición que aplica knockback al enemigo.
+    /// </summary>
+    public override void GetDamage(float damage, Vector2 position)
     {
         currentHealth -= damage;
-        enemyRigidbody2D.AddForce(((Vector2)transform.position - position).normalized * enemyData.knockbackForce, ForceMode2D.Impulse);
+        if (currentHealth <= 0)
+            currentHealth = 0;
+
+        Debug.Log($"{gameObject.name} recibió {damage} de daño desde {position}. Salud: {currentHealth}");
+
+        // Aplicar knockback
+        if (enemyRigidbody2D != null)
+        {
+            Vector2 knockbackDirection = ((Vector2)transform.position - position).normalized;
+            enemyRigidbody2D.AddForce(knockbackDirection * enemyData.knockbackForce, ForceMode2D.Impulse);
+        }
+
         if (currentHealth <= 0)
         {
-            Die();
+            OnDeath();
         }
     }
 
-    private void Die()
+    /// <summary>
+    /// Sobrescribe OnDeath para lógica de muerte específica del enemigo.
+    /// </summary>
+    protected override void OnDeath()
     {
         Debug.Log(gameObject.name + " has died.");
         //Logica de la muerte del enemigo	

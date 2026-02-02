@@ -29,6 +29,8 @@ public class MovementPlayer : MonoBehaviour
     [SerializeField, Range(0, 50)] private int endDash;
     [SerializeField, Range(0, 10)] private int framesCooldownDash;
     [SerializeField, Range(0, 1000)] private float dashForce;
+    [SerializeField] private Color invulnerabilityColor;
+    [SerializeField] private CapsuleCollider2D damageCollider;
 
     //variables no editables
     private float framesInDash;
@@ -191,7 +193,7 @@ public class MovementPlayer : MonoBehaviour
 
         rigidbody2DPlayer.AddForce(new Vector2(transform.localScale.x * dashForce, 0), ForceMode2D.Impulse);
 
-        yield return StartCoroutine(mainPlayerScript.InvulnerabilityFrames(invulnerableFrames));
+        yield return StartCoroutine(mainPlayerScript.InvulnerabilityFrames(invulnerableFrames, damageCollider, invulnerabilityColor));
         rigidbody2DPlayer.gravityScale = originalGravity;
         rigidbody2DPlayer.linearVelocity = Vector2.zero;
         yield return new WaitForSeconds(endDash * Time.fixedDeltaTime);
