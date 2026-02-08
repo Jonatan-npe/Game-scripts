@@ -21,9 +21,11 @@ public class CombatPlayer : CombatantBase
     }
 
     //Variables editables de ataque
-    [SerializeField, Range(0, 100)] private float framesToAttackAgain;
-    [SerializeField, Range(0, 300)] private float framesToEndCombo;
-    [SerializeField, Range(0, 200)] private float framesToGetDamage;
+    [SerializeField, Range(0, 60)] private float framesToAttackAgain = 30f;
+    [SerializeField, Range(0, 60)] private float framesToEndCombo;
+    [SerializeField, Range(0, 60)] private float framesToGetDamage;
+    [SerializeField, Range(0, 60)] private float earlyPressIgnoreWindow = 10f; // Frames iniciales: se ignora
+    [SerializeField, Range(0, 60)] private float latePressCaptureWindow = 20f; // Últimos frames: se guarda
 
     //colliders
     [SerializeField] private LayerMask hitLayerMask;
@@ -46,6 +48,9 @@ public class CombatPlayer : CombatantBase
     private bool canAttack = true;
     private bool isAttackActive = false; // Se activa/desactiva desde la animación
     private bool hasHitInThisWindow = false; // Flag para evitar múltiples hits
+    private bool hasPendingAttack = false; // Indica si hay un ataque en cola
+    private float framesSinceLastAttack = 0f; // Tiempo desde el último ataque
+    private InputAction pendingAttackAction; // La acción guardada
     private HashSet<GameObject> enemiesHitThisWindow = new(); // Para registrar enemigos golpeados
     private List<Collider2D> hitResults = new(); // Para almacenar los colliders detectados
     InputAction lastInput;
@@ -75,6 +80,10 @@ public class CombatPlayer : CombatantBase
         {
             CheckHit();
         }
+        if (!canAttack)
+        {
+            framesSinceLastAttack += 1f;
+        }
     }
     private void Update()
     {
@@ -83,14 +92,32 @@ public class CombatPlayer : CombatantBase
         {
             ActionAttackBuffer(lastInput);
         }
+        if (hasPendingAttack && canAttack)
+        {
+            ExecutePendingAttack();
+        }
+    }
+    private void ExecutePendingAttack()
+    {
+        hasPendingAttack = false;
+        RaiseOnAttack();
+        StartCoroutine(WaitForAttack());
     }
     private void ActionAttackBuffer(InputAction lastInput)
     {
-        if (!canAttack) return;
+        float remainingFrames = framesToAttackAgain - framesSinceLastAttack;
+        if (!canAttack && framesSinceLastAttack < earlyPressIgnoreWindow) return;
         switch (lastInput.name)
         {
             case "Attack":
+                if (remainingFrames <= latePressCaptureWindow)
+                {
+                    hasPendingAttack = true;
+                    pendingAttackAction = lastInput;
+                    return;
+                }
                 RaiseOnAttack();
+                StartCoroutine(WaitForAttack());
                 break;
         }   
     }
@@ -99,7 +126,6 @@ public class CombatPlayer : CombatantBase
         if (callbackContext.performed)
         {
             GameManager.Instance.AddBufferAttack(callbackContext.action);
-
         }
     }
 
@@ -192,6 +218,7 @@ public class CombatPlayer : CombatantBase
     private IEnumerator WaitForAttack()
     {
         canAttack = false;
+        framesSinceLastAttack = 0f;
         Debug.Log("WaitForAttack started");
         yield return FrameWaiter(framesToAttackAgain);
         Debug.Log("WaitForAttack finished");
