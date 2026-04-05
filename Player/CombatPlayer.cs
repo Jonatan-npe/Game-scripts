@@ -134,6 +134,9 @@ public class CombatPlayer : CombatantBase
         int hitCount = 0;
         var currentAttackTypeIndex = comboSystem.GetCurrentTypeIndex();
         var currentAttackIndex = comboSystem.GetCurrentAttackIndex();
+        Debug.Log("Checking hit for attack type index: " + currentAttackTypeIndex + ", attack index: " + currentAttackIndex);
+        Debug.LogWarning("Cheking hit con collider: " + comboSystem.AttackTypes[currentAttackTypeIndex]
+                                                                        .attacks[currentAttackIndex].colliderIndex);
         hitCount = Physics2D.OverlapCollider(attackColliders[comboSystem.AttackTypes[currentAttackTypeIndex]
                                                                         .attacks[currentAttackIndex].colliderIndex], hitResults);
 
